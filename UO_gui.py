@@ -6,12 +6,12 @@ import serial
 class UOGui(threading.Thread):
 
     def __init__(self, connection):
-    	self.connection = connection
+        self.connection = connection
         self.auto = False
         self.speed = 3
         self.MAX_SPEED = 12
         self.MIN_SPEED = 0
-        self.lane = 0 #Right Lane = 0
+        self.lane = 0  # Right Lane = 0
         threading.Thread.__init__(self)
         self.start()
 
@@ -20,31 +20,36 @@ class UOGui(threading.Thread):
 
     def toggleAuto(self):
         self.auto = not self.auto
-        self.connection.write("auto" + str(self.auto) + "\n")
         if self.auto:
+            self.connection.write("auto\n")
             self.autoOnOff["text"] = "Exit Auto"
             self.autoOnOff["bg"] = "red"
         else:
+            self.connection.write("manual\n")
             self.autoOnOff["text"] = "Enter Auto"
             self.autoOnOff["bg"] = "green"
 
     def speedUp(self):
         print "speeding up"
         self.speed = min(self.speed+1, self.MAX_SPEED)
+        self.connection.write("speed,{}\n".format(self.speed / 10.0))
         print self.speed
 
     def slowDown(self):
         print "slowing down"
         self.speed = max(self.speed-1, self.MIN_SPEED)
+        self.connection.write("speed,{}\n".format(self.speed / 10.0))
         print self.speed
 
     def toggleLane(self):
         print "changing lane"
-        self.lane = int (not self.lane);
+        self.lane = int(not self.lane)
         if self.lane == 0:
             self.changeLane["text"] = "Move to left"
+            self.connection.write("shift,l\n")
         else:
             self.changeLane["text"] = "Move to right"
+            self.connection.write("shift,r\n")
         print self.lane
 
     def createWidgets(self):
