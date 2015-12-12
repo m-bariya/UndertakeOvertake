@@ -6,12 +6,13 @@ import serial
 class UOGui(threading.Thread):
 
     def __init__(self, connection):
-    	self.connection = connection
+        self.connection = connection
         self.auto = False
         self.speed = 3
+        self.realSpeed = 0
         self.MAX_SPEED = 12
         self.MIN_SPEED = 0
-        self.lane = 0 #Right Lane = 0
+        self.lane = 0  # Right Lane = 0
         threading.Thread.__init__(self)
         self.start()
 
@@ -20,54 +21,87 @@ class UOGui(threading.Thread):
 
     def toggleAuto(self):
         self.auto = not self.auto
-        self.connection.write("auto" + str(self.auto) + "\n")
         if self.auto:
+            self.connection.write("auto\n")
             self.autoOnOff["text"] = "Exit Auto"
             self.autoOnOff["bg"] = "red"
         else:
+            self.connection.write("manual\n")
             self.autoOnOff["text"] = "Enter Auto"
             self.autoOnOff["bg"] = "green"
 
     def speedUp(self):
-        print "speeding up"
         self.speed = min(self.speed+1, self.MAX_SPEED)
-        print self.speed
+        self.connection.write("speed,{}\n".format(self.speed / 10.0))
+        self.updateSpeedDisplay()
 
     def slowDown(self):
-        print "slowing down"
         self.speed = max(self.speed-1, self.MIN_SPEED)
-        print self.speed
+        self.connection.write("speed,{}\n".format(self.speed / 10.0))
+        self.updateSpeedDisplay()
 
-    def toggleLane(self):
-        print "changing lane"
-        self.lane = int (not self.lane);
-        if self.lane == 0:
-            self.changeLane["text"] = "Move to left"
-        else:
-            self.changeLane["text"] = "Move to right"
-        print self.lane
+    def updateSpeedDisplay(self):
+        self.speedDisp["text"] = "Speed: " + str(self.speed)
+
+    def moveLeft(self):
+        self.lane = 1
+        self.connection.write("shift,l\n")
+        self.updateLaneDisplay()
+
+    def moveRight(self):
+        self.lane = 0
+        self.connection.write("shift,r\n")
+        self.updateLaneDisplay()
+
+    def updateLaneDisplay(self):
+        self.laneDist["text"] = "Lane: " + str(self.lane)
+
+    def override(self):
+        print "overriding"
 
     def createWidgets(self):
+        self.speedDisp = tk.Label(relief='sunken')
+        self.speedDisp["text"] = "Speed: " + str(self.speed)
+        self.speedDisp.grid(row=0, column=0)
+
+        self.goalSpeedDisp = tk.Label(relief='sunken')
+        self.goalSpeedDisp["text"] = "Actual: " + str(self.realSpeed)
+        self.goalSpeedDisp.grid(row=0, column=1)
+
+        self.laneDisp = tk.Label(relief='sunken')
+        self.laneDisp["text"] = "Lane: " + str(self.lane)
+        self.laneDisp.grid(row=0, column=2, columnspan=2, sticky='news')
+
         self.autoOnOff = tk.Button(self.root)
         self.autoOnOff["text"] = "Enter auto"
         self.autoOnOff["command"] = self.toggleAuto
         self.autoOnOff["bg"] = "green"
-        self.autoOnOff.grid(row=0, column=0)
+        self.autoOnOff.grid(row=3, column=0, columnspan=4, sticky='news')
 
         self.faster = tk.Button(self.root)
-        self.faster["text"] = "Speed up"
+        self.faster["text"] = "+"
         self.faster["command"] = self.speedUp
-        self.faster.grid(row=1, column=0)
+        self.faster.grid(row=1, column=1,sticky='news')
 
         self.slower = tk.Button(self.root)
-        self.slower["text"] = "Slow down"
+        self.slower["text"] = "-"
         self.slower["command"] = self.slowDown
-        self.slower.grid(row=1, column=1)
+        self.slower.grid(row=1, column=0, sticky='news')
 
-        self.changeLane = tk.Button(self.root)
-        self.changeLane["text"] = "Move to left"
-        self.changeLane["command"] = self.toggleLane
-        self.changeLane.grid(row=2, column=0)
+        self.changeLaneLeft = tk.Button(self.root)
+        self.changeLaneLeft["text"] = "<<"
+        self.changeLaneLeft["command"] = self.moveLeft
+        self.changeLaneLeft.grid(row=1, column=2)
+
+        self.changeLaneRight = tk.Button(self.root)
+        self.changeLaneRight["text"] = ">>"
+        self.changeLaneRight["command"] = self.moveRight
+        self.changeLaneRight.grid(row=1, column=3)
+
+        self.overrideButton = tk.Button(self.root)
+        self.overrideButton["text"] = "Override"
+        self.overrideButton["command"] = self.override
+        self.overrideButton.grid(row=2, column = 2, columnspan=2)
 
     def run(self):
         self.root = tk.Tk()
@@ -76,10 +110,11 @@ class UOGui(threading.Thread):
         self.root.mainloop()
 
 
-frdm = serial.Serial('COM4', 9600, timeout=0.1)
+frdm = serial.Serial('COM5', 115200, timeout=0.1)
+frdmIn = serial.Serial('COM6', 115200, timeout=0.1)
 app = UOGui(frdm)
 
 while True:
-	frdmOut = frdm.readline()
-	if frdmOut:
-		print frdmOut
+    frdmOut = frdm.readline()
+    if frdmOut:
+        print frdmOut
