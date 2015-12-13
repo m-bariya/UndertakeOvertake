@@ -8,9 +8,10 @@ class UOGui(threading.Thread):
     def __init__(self, connection):
         self.connection = connection
         self.auto = False
-        self.speed = 3
-        self.realSpeed = 0
-        self.MAX_SPEED = 12
+        self.speed = 3.0
+        self.realSpeed = 0.0
+        self.speedStep = 0.25
+        self.MAX_SPEED = 1.2
         self.MIN_SPEED = 0
         self.lane = 0  # Right Lane = 0
         threading.Thread.__init__(self)
@@ -23,7 +24,7 @@ class UOGui(threading.Thread):
         self.auto = not self.auto
         if self.auto:
             self.connection.write("auto\n")
-            self.autoOnOff["text"] = "Exit Auto"
+            self.autoOnOff["text"] = "Enter Manual"
             self.autoOnOff["bg"] = "red"
         else:
             self.connection.write("manual\n")
@@ -31,13 +32,13 @@ class UOGui(threading.Thread):
             self.autoOnOff["bg"] = "green"
 
     def speedUp(self):
-        self.speed = min(self.speed+1, self.MAX_SPEED)
-        self.connection.write("speed,{}\n".format(self.speed / 10.0))
+        self.speed = min(self.speed+self.speedStep, self.MAX_SPEED)
+        self.connection.write("speed,{}\n".format(self.speed))
         self.updateSpeedDisplay()
 
     def slowDown(self):
-        self.speed = max(self.speed-1, self.MIN_SPEED)
-        self.connection.write("speed,{}\n".format(self.speed / 10.0))
+        self.speed = max(self.speed-self.speedStep, self.MIN_SPEED)
+        self.connection.write("speed,{}\n".format(self.speed))
         self.updateSpeedDisplay()
 
     def updateSpeedDisplay(self):
@@ -54,7 +55,7 @@ class UOGui(threading.Thread):
         self.updateLaneDisplay()
 
     def updateLaneDisplay(self):
-        self.laneDist["text"] = "Lane: " + str(self.lane)
+        self.laneDisp["text"] = "Lane: " + str(self.lane)
 
     def override(self):
         print "overriding"
