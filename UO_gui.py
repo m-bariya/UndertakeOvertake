@@ -8,11 +8,12 @@ class UOGui(threading.Thread):
     def __init__(self, connection):
         self.connection = connection
         self.auto = False
-        self.speed = 3.0
+        self.speed = 1.2
         self.realSpeed = 0.0
         self.speedStep = 0.25
         self.MAX_SPEED = 1.2
         self.MIN_SPEED = 0
+        self.overtake = 0
         self.lane = 0  # Right Lane = 0
         threading.Thread.__init__(self)
         self.start()
@@ -60,6 +61,17 @@ class UOGui(threading.Thread):
     def override(self):
         print "overriding"
 
+    def overtakeToggle(self):
+        print "Automatic overtake control"
+        self.overtake = not self.overtake
+        if (self.overtake):
+            self.overtakeButton["text"] = "Turn off auto overtake"
+            self.overtakeButton["bg"] = "red"
+        else:
+            self.overtakeButton["text"] = "Turn on auto overtake"
+            self.overtakeButton["bg"] = "green"
+        self.connection.write("overtake\n")
+
     def createWidgets(self):
         self.speedDisp = tk.Label(relief='sunken')
         self.speedDisp["text"] = "Speed: " + str(self.speed)
@@ -78,6 +90,12 @@ class UOGui(threading.Thread):
         self.autoOnOff["command"] = self.toggleAuto
         self.autoOnOff["bg"] = "green"
         self.autoOnOff.grid(row=3, column=0, columnspan=4, sticky='news')
+
+        self.overtakeButton = tk.Button(self.root)
+        self.overtakeButton["text"] = "Turn on auto overtake."
+        self.overtakeButton["command"] = self.overtakeToggle
+        self.overtakeButton["bg"] = "green"
+        self.overtakeButton.grid(row=4, column=0, columnspan=4, sticky='news')
 
         self.faster = tk.Button(self.root)
         self.faster["text"] = "+"
@@ -111,8 +129,8 @@ class UOGui(threading.Thread):
         self.root.mainloop()
 
 
-frdm = serial.Serial('COM5', 115200, timeout=0.1)
-frdmIn = serial.Serial('COM6', 115200, timeout=0.1)
+frdm = serial.Serial('COM4', 9600, timeout=0.1)
+#frdmIn = serial.Serial('COM6', 115200, timeout=0.1)
 app = UOGui(frdm)
 
 while True:
