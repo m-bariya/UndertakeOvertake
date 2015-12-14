@@ -1,6 +1,5 @@
 import Tkinter as tk
 import threading
-import time
 import serial
 
 class UOGui(threading.Thread):
@@ -15,6 +14,7 @@ class UOGui(threading.Thread):
         self.MIN_SPEED = 0
         self.overtake = 0
         self.lane = 0  # Right Lane = 0
+        self.state = 'MANUAL'
         threading.Thread.__init__(self)
         self.start()
 
@@ -100,7 +100,7 @@ class UOGui(threading.Thread):
         self.faster = tk.Button(self.root)
         self.faster["text"] = "+"
         self.faster["command"] = self.speedUp
-        self.faster.grid(row=1, column=1,sticky='news')
+        self.faster.grid(row=1, column=1, sticky='news')
 
         self.slower = tk.Button(self.root)
         self.slower["text"] = "-"
@@ -120,7 +120,7 @@ class UOGui(threading.Thread):
         self.overrideButton = tk.Button(self.root)
         self.overrideButton["text"] = "Override"
         self.overrideButton["command"] = self.override
-        self.overrideButton.grid(row=2, column = 2, columnspan=2)
+        self.overrideButton.grid(row=2, column=2, columnspan=2)
 
     def run(self):
         self.root = tk.Tk()
@@ -136,4 +136,12 @@ app = UOGui(frdm)
 while True:
     frdmOut = frdm.readline()
     if frdmOut:
+        tokens = frdmOut.strip('\n').strip('\r').split(',')
+        if len(tokens) == 3:
+            try:
+                app.state = tokens[0].upper()
+                app.speed = float(tokens[1])
+                app.lane = int(tokens[2])
+            except:
+                print 'Parsing error.'
         print frdmOut
