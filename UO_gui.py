@@ -127,7 +127,6 @@ class UOGui(threading.Thread):
         self.stateDisp.grid(row=2, column=0, columnspan=2)
 
     def update(self):
-        print "UPDATINGGGGGGGGGGGGGG"
         if (self.state == "OBSTACLE"):
             self.overtakeButton["state"] = "disabled"
         else:
