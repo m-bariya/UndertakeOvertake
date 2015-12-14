@@ -122,15 +122,30 @@ class UOGui(threading.Thread):
         self.overrideButton["command"] = self.override
         self.overrideButton.grid(row=2, column=2, columnspan=2)
 
+        self.stateDisp = tk.Label(relief='sunken')
+        self.stateDisp["text"] = "State: " + self.state
+        self.stateDisp.grid(row=2, column=0, columnspan=2)
+
+    def update(self):
+        print "UPDATINGGGGGGGGGGGGGG"
+        if (self.state == "OBSTACLE"):
+            self.overtakeButton["state"] = "disabled"
+        else:
+            self.overtakeButton["state"] = "active"
+        self.goalSpeedDisp["text"] = "Actual: " + str(self.realSpeed)
+        self.stateDisp["text"] = self.state
+        self.laneDisp["text"] = "Lane: " + str(self.lane)
+        self.root.after(10, self.update)
+
+
     def run(self):
         self.root = tk.Tk()
         self.root.protocol("WM_DELETE_WINDOW", self.callback)
         self.createWidgets()
+        self.root.after(10, self.update)
         self.root.mainloop()
 
-
 frdm = serial.Serial('COM4', 9600, timeout=0.1)
-#frdmIn = serial.Serial('COM6', 115200, timeout=0.1)
 app = UOGui(frdm)
 
 while True:
@@ -140,8 +155,8 @@ while True:
         if len(tokens) == 3:
             try:
                 app.state = tokens[0].upper()
-                app.speed = float(tokens[1])
+                app.realSpeed= float(tokens[1])
                 app.lane = int(tokens[2])
-            except:
-                print 'Parsing error.'
+            except Exception as e:
+                print 'Parsing error.', e
         print frdmOut
